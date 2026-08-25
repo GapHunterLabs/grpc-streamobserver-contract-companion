@@ -1,0 +1,46 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <id>dev.gaphunter.grpcstreamobservercontractcompanion</id>
+    <name>gRPC StreamObserver Contract Companion</name>
+    <vendor>Gap Hunter Labs</vendor>
+    <description><![CDATA[
+        <p>Warning icon on a <code>.onNext(...)</code> or
+        <code>.onError(...)</code> call on a gRPC <code>StreamObserver</code>
+        found, in textual order, AFTER an <code>.onCompleted()</code> call
+        on the same receiver, within the same method body -- gRPC's own
+        <code>StreamObserver</code> javadoc states the contract
+        explicitly: <code>onNext</code> "is never called after
+        onError(Throwable) or onCompleted() are called", and "onCompleted
+        may only be called once and if called it must be the last method
+        called". Calling either after completion is a real, documented
+        contract violation, not just a style nit.</p>
+        <p><b>100% static text/PSI analysis</b> -- matches receiver/method
+        names by simple text, so it works whether the real gRPC jar is on
+        the classpath or not. Java and Kotlin. Confirmed gap: no bundled
+        or third-party Marketplace plugin covers this specific ordering
+        check (existing gRPC plugins are navigation/documentation tools).</p>
+        <p>Stated honestly: v0.1 only catches the straight-line,
+        same-method-body case (both calls as direct statements, textual
+        order = execution order) -- doesn't trace calls split across
+        branches/loops/helper methods, and a call guarded by an early
+        return between the two is a possible false positive not traced
+        here.</p>
+        <p>Free. No license nags, no telemetry, no network calls.</p>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.java</depends>
+    <depends>org.jetbrains.kotlin</depends>
+
+    <extensions defaultExtensionNs="org.jetbrains.kotlin">
+        <supportsKotlinPluginMode supportsK1="true" supportsK2="true"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <codeInsight.lineMarkerProvider language="JAVA"
+            implementationClass="dev.gaphunter.grpcstreamobservercontractcompanion.gutter.ContractViolationLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="kotlin"
+            implementationClass="dev.gaphunter.grpcstreamobservercontractcompanion.gutter.ContractViolationLineMarkerProvider"/>
+        <notificationGroup id="gRPC StreamObserver Contract Companion" displayType="BALLOON"/>
+    </extensions>
+</idea-plugin>
